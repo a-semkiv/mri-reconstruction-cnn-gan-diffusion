@@ -3,22 +3,22 @@
 Implementation for a bachelor thesis on accelerated MRI reconstruction using three approaches:  
 CNN (U-Net), GAN (Pix2Pix), and diffusion (DDPM) models.
 
-## Dataset
+### Dataset
 
 Experiments are based on the fastMRI dataset (not included).  
 (https://fastmri.med.nyu.edu/)
 
-## Structure
+### Structure
 
-configs/ # model configurations
-scripts/ # training and model code
-tests/ # evaluation and metrics
+- configs/ # model configurations
+- scripts/ # training and model code
+- tests/ # evaluation and metrics
 
-## Usage
+### Usage
 
 Example (CNN): python scripts/cnn/train_full_ds.py
 
-## Notes
+### Notes
 
 - Training was performed on a compute cluster  
 - Some paths may require adjustment  
