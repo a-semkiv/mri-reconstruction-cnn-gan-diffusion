@@ -14,10 +14,6 @@ Experiments are based on the fastMRI dataset (not included).
 - scripts/ # training and model code
 - tests/ # evaluation and metrics
 
-### Usage
-
-Example (CNN): python scripts/cnn/train_full_ds.py
-
 ### Notes
 
 - Training was performed on a compute cluster  
