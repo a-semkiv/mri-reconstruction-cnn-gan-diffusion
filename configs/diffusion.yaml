@@ -1,0 +1,8 @@
+chans: 48
+ema_decay: 0.9995
+lr: 3.0e-05
+num_pool_layers: 4
+num_timesteps: 400
+sampling_steps: 200
+val_sampling_steps: 200
+warmup_steps: 8000

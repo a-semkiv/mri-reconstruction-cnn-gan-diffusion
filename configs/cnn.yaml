@@ -1,0 +1,7 @@
+chans: 32
+drop_prob: 0.0
+in_chans: 1
+lr: 0.0003
+num_pool_layers: 4
+out_chans: 1
+weight_decay: 0.0
