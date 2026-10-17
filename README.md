@@ -8,7 +8,7 @@ Code for my bachelor's thesis on accelerated brain MRI reconstruction. The proje
 
 The thesis frames reconstruction as a problem of *prior selection*: with only a fraction of k-space measured, many images are consistent with the data, and each model resolves this ambiguity differently. All three models are trained *without* explicit data consistency, so that the effect of the learned prior can be examined on its own.
 
-**Thesis:** *Accelerated MRI Reconstruction using CNNs, GANs and Diffusion Models* (Catholic University of Eichstätt-Ingolstadt, 2026). [TODO: add link or note "available on request"]
+**Thesis:** *Accelerated MRI Reconstruction using CNNs, GANs and Diffusion Models* (Catholic University of Eichstätt-Ingolstadt, 2026).
 
 ## Setup
 
@@ -17,10 +17,10 @@ The thesis frames reconstruction as a problem of *prior selection*: with only a 
 | Dataset | fastMRI brain, multi-coil, subset (`train_batch_0`, `train_batch_1`, `val_batch_0`) |
 | Split | 901 train / 115 val / 115 test volumes (split at volume level, no slice leakage) |
 | Test set | 1816 slices |
-| Acceleration | R = 4 (fastMRI Cartesian mask) |
+| Acceleration | R = 4, random Cartesian undersampling mask (fastMRI protocol) [TODO: confirm center fraction in `build_mask_r4`] |
 | Input | zero-filled reconstruction, RSS-combined single-channel magnitude image |
 | Preprocessing | official fastMRI transforms, center crop, per-image normalization, clipping to [−6, 6] |
-| Training | batch size 1, fixed seeds, two stages (epochs chosen on validation set, then retraining on train + val) |
+| Training | batch size 1 per GPU (diffusion: 3 GPUs × 4 gradient accumulation steps = effective batch size 12), fixed seeds, two stages (epochs chosen on validation set, then retraining on train + val) |
 | Hardware | NHR@FAU Alex cluster (A40/A100); CNN and GAN on 1 GPU, diffusion on 3 GPUs (DDP) |
 | Software | PyTorch 2.9.1, CUDA 12.8 |
 
@@ -58,7 +58,7 @@ Restricted to the foreground (head) region:
 - The CNN gives the best distortion metrics but produces over-smoothed reconstructions.
 - The GAN gives sharper, more realistic-looking images at a higher risk of hallucinated structures.
 - The diffusion model underperforms in this setting, including against the zero-filled baseline, with high variability and noise artifacts in the background.
-- Beyond NMSE/PSNR/SSIM, the thesis analyses per-slice distributions, region-of-interest comparisons, edge-based structural errors (false and missed edges) and frequency-domain behavior.
+- Beyond NMSE/PSNR/SSIM, the thesis analyses per-slice distributions, region-of-interest comparisons, edge-based structural errors (false and missed edges) and frequency-domain behavior. This repository contains the code for the metrics, foreground evaluation and visual/ROI analysis; [TODO: the scripts for the edge-based and frequency-domain analysis are not included yet].
 
 ## Limitations
 
@@ -70,37 +70,33 @@ Please read the results with these in mind:
 - Single run per model, single acceleration factor (R = 4), subset of the dataset.
 - Hallucination risk is assessed qualitatively and through structural-error analysis, not through a dedicated metric.
 
+## About this repository
+
+This repository documents the code I used for the models and experiments in the thesis. It is **not** packaged as a ready-to-run tool: the scripts were written and run on the NHR@FAU cluster, so they depend on cluster-specific paths, shared helper modules and hardware settings (for example, the diffusion model trains on 3 GPUs with DDP), and some internal names (such as `model_3`) come from that environment. Datasets, checkpoints and training logs are not included.
+
+The fastMRI data must be requested separately from the [fastMRI website](https://fastmri.med.nyu.edu/). The U-Net used for the CNN baseline and the data transforms come from the official [fastMRI repository](https://github.com/facebookresearch/fastMRI). Training uses PyTorch Lightning and TensorBoard.
+
 ## Repository structure
 
 ```
-configs/     # model and training configurations
-scripts/     # training scripts and model implementations
-evaluation/  # evaluation scripts and metrics   [TODO: rename from tests/ if it contains no unit tests]
+configs/
+  cnn.yaml, gan.yaml, diffusion.yaml    # training configurations
+scripts/
+  cnn/         train_full_ds.py         # U-Net training
+  gan/         train_full_ds.py         # Pix2Pix training
+               generator.py, discriminator.py, gan_module.py, losses.py
+  diffusion/   train_full_ds.py         # conditional DDPM training
+               denoiser.py, diffusion_module.py, scheduler.py, sampling.py, losses.py
+evaluation/                             # [TODO: currently named tests/; rename, these are evaluation scripts, not unit tests]
+  metrics/     run_metrics_evaluation.py              # NMSE, PSNR, SSIM per slice (full image)
+               run_metrics_evaluation_foreground.py   # same, restricted to the foreground region
+               compute_metrics_statistics.py          # aggregate statistics
+  visual/      select_visual_cases.py                 # choose representative slices
+               generate_visual_cases.py               # reconstructions and error maps
+               zoom_analysis.py                       # ROI comparison
 ```
 
-## Installation
-
-```bash
-git clone https://github.com/a-semkiv/mri-reconstruction-cnn-gan-diffusion.git
-cd mri-reconstruction-cnn-gan-diffusion
-pip install -r requirements.txt   # [TODO: add requirements.txt]
-```
-
-The fastMRI data is not included and must be requested from the [fastMRI website](https://fastmri.med.nyu.edu/). Set the data path in the config file [TODO: name the config key].
-
-## Usage
-
-```bash
-# Training  [TODO: replace with the actual commands]
-python scripts/train_cnn.py --config configs/cnn.yaml
-python scripts/train_gan.py --config configs/gan.yaml
-python scripts/train_diffusion.py --config configs/diffusion.yaml
-
-# Evaluation  [TODO]
-python evaluation/evaluate.py --config configs/eval.yaml
-```
-
-The code was developed on a GPU cluster, so file paths and hardware settings (number of GPUs for the diffusion model) may need adjustment. Trained checkpoints and full training logs are not included.
+Training hyperparameters are set at the top of each `train_full_ds.py`. [TODO: say how `configs/*.yaml` relates to them, or remove the folder if it is unused.]
 
 ## References
 
