@@ -16,6 +16,6 @@ Experiments are based on the fastMRI dataset (not included).
 
 ### Notes
 
-- Training was performed on a compute cluster  
+- Training was performed on a cluster  
 - Some paths may require adjustment  
 - Checkpoints and full results are not included  
